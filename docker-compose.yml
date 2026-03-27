@@ -21,7 +21,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: backend_products
+    container_name: products-service
     restart: unless-stopped
     depends_on:
       mysql:
