@@ -7,6 +7,7 @@ import { ProductsModule } from './products/products.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: process.env.NODE_ENV === 'test' ? '.env.e2e' : '.env',
     }),
     SequelizeModule.forRoot({
       dialect: 'mysql',
