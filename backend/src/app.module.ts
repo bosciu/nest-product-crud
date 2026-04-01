@@ -18,6 +18,7 @@ import { ProductsModule } from './products/products.module';
       database: process.env.DB_NAME,
       autoLoadModels: true,
       synchronize: true,
+      logging: process.env.NODE_ENV === 'test' ? false : console.log,
     }),
     ProductsModule,
   ],

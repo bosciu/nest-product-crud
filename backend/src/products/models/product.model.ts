@@ -42,7 +42,13 @@ export class Product extends Model<
   declare name: string;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 2))
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    get() {
+      const value = this.getDataValue('price') as string;
+      return value != null ? parseFloat(value) : value;
+    },
+  })
   declare price: number;
 
   @AllowNull(false)

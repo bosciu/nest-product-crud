@@ -26,7 +26,9 @@ export class ProductsService {
 
     if (error instanceof ValidationError) {
       throw new BadRequestException(
-        error.errors?.map((e: any) => e.message) ?? ['Validation error'],
+        error.errors?.map((e: { message: string }) => e.message) ?? [
+          'Validation error',
+        ],
       );
     }
 

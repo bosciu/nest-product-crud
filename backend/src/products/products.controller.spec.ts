@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductStockDto } from './dto/update-product-stock.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Product } from './models/product.model';
 
 describe('ProductsController', () => {
   let controller: ProductsController;
@@ -52,7 +55,7 @@ describe('ProductsController', () => {
         ...baseDto,
       };
 
-      service.create.mockResolvedValue(expectedResult as any);
+      service.create.mockResolvedValue(expectedResult as Product);
 
       const result = await controller.create(baseDto);
 
@@ -93,7 +96,7 @@ describe('ProductsController', () => {
         ...baseDto,
       };
 
-      service.findOne.mockResolvedValue(expectedResult as any);
+      service.findOne.mockResolvedValue(expectedResult as Product);
 
       const result = await controller.findOne(1);
 
@@ -114,7 +117,7 @@ describe('ProductsController', () => {
         stock: 25,
       };
 
-      service.updateStock.mockResolvedValue(expectedResult as any);
+      service.updateStock.mockResolvedValue(expectedResult as Product);
 
       const result = await controller.updateStock(1, dto);
 
