@@ -158,6 +158,19 @@ describe('Products e2e', () => {
         },
       });
     });
+
+    it('should return 400 when limit exceeds max allowed', async () => {
+      const response = await request(httpServer)
+        .get('/products?page=1&limit=101')
+        .expect(400);
+
+      const responseBody = response.body as ErrorBody;
+      expect(responseBody.statusCode).toBe(400);
+      expect(Array.isArray(responseBody.message)).toBe(true);
+      expect(responseBody.message).toContain(
+        'limit must not be greater than 100',
+      );
+    });
   });
 
   describe('GET /products/:id', () => {

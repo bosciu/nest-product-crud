@@ -15,6 +15,7 @@ import { UpdateProductStockDto } from './dto/update-product-stock.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import {
   ApiBadRequestResponse,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -26,7 +27,7 @@ import {
 import { ProductResponseDto } from './dto/product-response.dto';
 import { PaginatedProductsResponseDto } from './dto/paginated-products-response.dto';
 
-@ApiTags('products')
+@ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
@@ -47,6 +48,16 @@ export class ProductsController {
           'price must be a positive number',
         ],
         error: 'Bad Request',
+      },
+    },
+  })
+  @ApiConflictResponse({
+    description: 'Duplicate productToken',
+    schema: {
+      example: {
+        statusCode: 409,
+        message: 'Product with same productToken already exists',
+        error: 'Conflict',
       },
     },
   })

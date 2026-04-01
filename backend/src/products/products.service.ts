@@ -5,10 +5,23 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { UniqueConstraintError, ValidationError } from 'sequelize';
+import {
+  UniqueConstraintError,
+  ValidationError,
+  type ValidationErrorItem,
+} from 'sequelize';
 import { Product } from './models/product.model';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductStockDto } from './dto/update-product-stock.dto';
+
+type PaginatedProductsResult = {
+  data: Product[];
+  meta: {
+    total: number;
+    page: number;
+    lastPage: number;
+  };
+};
 
 @Injectable()
 export class ProductsService {
@@ -17,7 +30,7 @@ export class ProductsService {
     private productModel: typeof Product,
   ) {}
 
-  private handleSequelizeError(error: any): never {
+  private handleSequelizeError(error: unknown): never {
     if (error instanceof UniqueConstraintError) {
       throw new ConflictException(
         'Product with same productToken already exists',
@@ -26,7 +39,7 @@ export class ProductsService {
 
     if (error instanceof ValidationError) {
       throw new BadRequestException(
-        error.errors?.map((e: { message: string }) => e.message) ?? [
+        error.errors?.map((e: ValidationErrorItem) => e.message) ?? [
           'Validation error',
         ],
       );
@@ -43,7 +56,7 @@ export class ProductsService {
     }
   }
 
-  async findAll(page: number, limit: number) {
+  async findAll(page: number, limit: number): Promise<PaginatedProductsResult> {
     const offset = (page - 1) * limit;
 
     const { rows, count } = await this.productModel.findAndCountAll({
