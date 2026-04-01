@@ -11,6 +11,9 @@ import { Product } from './models/product.model';
 describe('ProductsController', () => {
   let controller: ProductsController;
   let service: jest.Mocked<ProductsService>;
+  type PaginatedProductsResult = Awaited<
+    ReturnType<ProductsService['findAll']>
+  >;
 
   const baseDto: CreateProductDto = {
     productToken: 'prod-001',
@@ -71,7 +74,7 @@ describe('ProductsController', () => {
         limit: 10,
       };
 
-      const expectedResult = {
+      const expectedResult: PaginatedProductsResult = {
         data: [],
         meta: {
           total: 0,
@@ -80,7 +83,7 @@ describe('ProductsController', () => {
         },
       };
 
-      service.findAll.mockResolvedValue(expectedResult as any);
+      service.findAll.mockResolvedValue(expectedResult);
 
       const result = await controller.findAll(query);
 

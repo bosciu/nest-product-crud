@@ -6,6 +6,7 @@ import {
   IsPositive,
   IsString,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -31,5 +32,6 @@ export class CreateProductDto {
   @ApiProperty({ example: 10 })
   @Type(() => Number)
   @IsInt()
+  @Min(0)
   stock!: number;
 }

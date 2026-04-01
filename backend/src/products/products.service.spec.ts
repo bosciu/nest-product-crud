@@ -5,7 +5,12 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { UniqueConstraintError, ValidationError } from 'sequelize';
+import {
+  UniqueConstraintError,
+  ValidationError,
+  ValidationErrorItem,
+  type Model as SequelizeModel,
+} from 'sequelize';
 
 import { ProductsService } from './products.service';
 import { Product } from './models/product.model';
@@ -14,6 +19,24 @@ import { UpdateProductStockDto } from './dto/update-product-stock.dto';
 
 describe('ProductsService', () => {
   let service: ProductsService;
+
+  const buildValidationError = (messages: string[]): ValidationError =>
+    new ValidationError(
+      'Validation error',
+      messages.map(
+        (message) =>
+          new ValidationErrorItem(
+            message,
+            'validation error',
+            'field',
+            '',
+            {} as SequelizeModel,
+            'validation',
+            'isValid',
+            [],
+          ),
+      ),
+    );
 
   const baseDto: CreateProductDto = {
     productToken: 'prod-001',
@@ -78,23 +101,17 @@ describe('ProductsService', () => {
     });
 
     it('should throw BadRequestException on validation error', async () => {
-      const error = new ValidationError('Validation error', [
-        { message: 'Name is required' } as any,
-      ]);
+      const error = buildValidationError(['Name is required']);
 
       mockProductModel.create.mockRejectedValue(error);
 
-      try {
-        await service.create(baseDto);
-        throw new Error('Expected create to throw BadRequestException');
-      } catch (err: any) {
-        expect(err).toBeInstanceOf(BadRequestException);
-
-        const response = err.getResponse();
-        expect(response).toMatchObject({
+      const promise = service.create(baseDto);
+      await expect(promise).rejects.toBeInstanceOf(BadRequestException);
+      await expect(promise).rejects.toMatchObject({
+        response: {
           message: ['Name is required'],
-        });
-      }
+        },
+      });
 
       expect(mockProductModel.create).toHaveBeenCalledWith(baseDto);
     });
@@ -205,11 +222,13 @@ describe('ProductsService', () => {
         update: jest.fn().mockResolvedValue(updatedProduct),
       };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(productInstance as any);
+      const findOneSpy = jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(productInstance as unknown as Product);
 
       const result = await service.updateStock(1, dto);
 
-      expect(service.findOne).toHaveBeenCalledWith(1);
+      expect(findOneSpy).toHaveBeenCalledWith(1);
       expect(productInstance.update).toHaveBeenCalledWith({ stock: 25 });
       expect(result).toEqual(updatedProduct);
     });
@@ -219,7 +238,7 @@ describe('ProductsService', () => {
         stock: 25,
       };
 
-      jest
+      const findOneSpy = jest
         .spyOn(service, 'findOne')
         .mockRejectedValue(
           new NotFoundException('Product with id 999 not found'),
@@ -230,7 +249,7 @@ describe('ProductsService', () => {
       await expect(promise).rejects.toThrow(NotFoundException);
       await expect(promise).rejects.toThrow('Product with id 999 not found');
 
-      expect(service.findOne).toHaveBeenCalledWith(999);
+      expect(findOneSpy).toHaveBeenCalledWith(999);
     });
 
     it('should throw BadRequestException when update fails with validation error', async () => {
@@ -242,27 +261,23 @@ describe('ProductsService', () => {
         update: jest
           .fn()
           .mockRejectedValue(
-            new ValidationError('Validation error', [
-              { message: 'Stock must be greater than 0' } as any,
-            ]),
+            buildValidationError(['Stock must be greater than 0']),
           ),
       };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(productInstance as any);
+      const findOneSpy = jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(productInstance as unknown as Product);
 
-      try {
-        await service.updateStock(1, dto);
-        throw new Error('Expected updateStock to throw BadRequestException');
-      } catch (err: any) {
-        expect(err).toBeInstanceOf(BadRequestException);
-
-        const response = err.getResponse();
-        expect(response).toMatchObject({
+      const promise = service.updateStock(1, dto);
+      await expect(promise).rejects.toBeInstanceOf(BadRequestException);
+      await expect(promise).rejects.toMatchObject({
+        response: {
           message: ['Stock must be greater than 0'],
-        });
-      }
+        },
+      });
 
-      expect(service.findOne).toHaveBeenCalledWith(1);
+      expect(findOneSpy).toHaveBeenCalledWith(1);
       expect(productInstance.update).toHaveBeenCalledWith({ stock: 25 });
     });
   });
@@ -273,16 +288,18 @@ describe('ProductsService', () => {
         destroy: jest.fn().mockResolvedValue(undefined),
       };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(productInstance as any);
+      const findOneSpy = jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(productInstance as unknown as Product);
 
       await service.delete(1);
 
-      expect(service.findOne).toHaveBeenCalledWith(1);
+      expect(findOneSpy).toHaveBeenCalledWith(1);
       expect(productInstance.destroy).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when deleting a non existing product', async () => {
-      jest
+      const findOneSpy = jest
         .spyOn(service, 'findOne')
         .mockRejectedValue(
           new NotFoundException('Product with id 999 not found'),
@@ -293,7 +310,7 @@ describe('ProductsService', () => {
       await expect(promise).rejects.toThrow(NotFoundException);
       await expect(promise).rejects.toThrow('Product with id 999 not found');
 
-      expect(service.findOne).toHaveBeenCalledWith(999);
+      expect(findOneSpy).toHaveBeenCalledWith(999);
     });
   });
 });
